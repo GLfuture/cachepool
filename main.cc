@@ -1,5 +1,4 @@
 #include <hiredis/hiredis.h>
-#include "Reactor.hpp"
 #include "CachePool.h"
 #include <time.h>
 using namespace std;
