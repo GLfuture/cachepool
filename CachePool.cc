@@ -26,7 +26,7 @@ CacheConn::CacheConn(CachePool *pCachePool)
 	}
 	else
 	{
-		log_error("pCachePool is NULL\n");
+		spdlog::error("File:{} Line:{} pCachePool is NULL",__FILE__,__LINE__);
 	}
 
 	m_pContext = NULL;
@@ -56,7 +56,7 @@ int CacheConn::Init()
 	uint64_t cur_time = (uint64_t)time(NULL);
 	if (cur_time < m_last_connect_time + 1) // 重连尝试 间隔1秒
 	{
-		printf("cur_time:%lu, m_last_connect_time:%lu\n", cur_time, m_last_connect_time);
+		spdlog::info("File:{} Line:{} cur_time:{}, m_last_connect_time:{}",__FILE__,__LINE__, cur_time, m_last_connect_time);
 		return 1;
 	}
 	// printf("m_last_connect_time = cur_time\n");
@@ -72,13 +72,13 @@ int CacheConn::Init()
 	{
 		if (m_pContext)
 		{
-			log_error("redisConnect failed: %s\n", m_pContext->errstr);
+			spdlog::error("File:{} Line:{} redisConnect failed: {}",__FILE__,__LINE__, m_pContext->errstr);
 			redisFree(m_pContext);
 			m_pContext = NULL;
 		}
 		else
 		{
-			log_error("redisConnect failed\n");
+			spdlog::error("File:{} Line:{} redisConnect failed",__FILE__,__LINE__);
 		}
 
 		return 1;
@@ -92,14 +92,14 @@ int CacheConn::Init()
 
 		if (!reply || reply->type == REDIS_REPLY_ERROR)
 		{
-			log_error("Authentication failure:%p\n", reply);
+			spdlog::error("File:{} Line:{} Authentication failure",__FILE__,__LINE__);
 			if (reply)
 				freeReplyObject(reply);
 			return -1;
 		}
 		else
 		{
-			// log_info("Authentication success\n");
+			spdlog::info("Authentication success");
 		}
 
 		freeReplyObject(reply);
@@ -115,7 +115,7 @@ int CacheConn::Init()
 	else
 	{
 		if (reply)
-			log_error("select cache db failed:%s\n", reply->str);
+			spdlog::error("File:{} Line:{} select cache db failed:{}",__FILE__,__LINE__, reply->str);
 		return 2;
 	}
 }
@@ -146,7 +146,7 @@ string CacheConn::get(string key)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "GET %s", key.c_str());
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return value;
@@ -173,7 +173,7 @@ string CacheConn::set(string key, string &value)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "SET %s %s", key.c_str(), value.c_str());
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return ret_value;
@@ -196,7 +196,7 @@ string CacheConn::setex(string key, int timeout, string value)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "SETEX %s %d %s", key.c_str(), timeout, value.c_str());
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return ret_value;
@@ -241,7 +241,7 @@ bool CacheConn::mget(const vector<string> &keys, map<string, string> &ret_value)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, strKey.c_str());
 	if (!reply)
 	{
-		log_info("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::info("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return false;
@@ -271,7 +271,7 @@ bool CacheConn::isExists(string &key)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "EXISTS %s", key.c_str());
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return false;
@@ -298,7 +298,7 @@ long CacheConn::del(string &key)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "DEL %s", key.c_str());
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return 0;
@@ -320,7 +320,7 @@ string CacheConn::hget(string key, string field)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "HGET %s %s", key.c_str(), field.c_str());
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return ret_value;
@@ -345,7 +345,7 @@ bool CacheConn::hgetAll(string key, map<string, string> &ret_value)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "HGETALL %s", key.c_str());
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return false;
@@ -378,7 +378,7 @@ long CacheConn::hset(string key, string field, string value)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "HSET %s %s %s", key.c_str(), field.c_str(), value.c_str());
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return -1;
@@ -399,7 +399,7 @@ long CacheConn::hincrBy(string key, string field, long value)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "HINCRBY %s %s %ld", key.c_str(), field.c_str(), value);
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return -1;
@@ -420,7 +420,7 @@ long CacheConn::incrBy(string key, long value)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "INCRBY %s %ld", key.c_str(), value);
 	if (!reply)
 	{
-		log_error("redis Command failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redis Command failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return -1;
@@ -458,7 +458,7 @@ string CacheConn::hmset(string key, map<string, string> &hash)
 	redisReply *reply = (redisReply *)redisCommandArgv(m_pContext, argc, argv, NULL);
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		delete[] argv;
 
 		redisFree(m_pContext);
@@ -498,7 +498,7 @@ bool CacheConn::hmget(string key, list<string> &fields, list<string> &ret_value)
 	redisReply *reply = (redisReply *)redisCommandArgv(m_pContext, argc, (const char **)argv, NULL);
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		delete[] argv;
 
 		redisFree(m_pContext);
@@ -532,7 +532,7 @@ long CacheConn::incr(string key)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "INCR %s", key.c_str());
 	if (!reply)
 	{
-		log_error("redis Command failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redis Command failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return -1;
@@ -552,7 +552,7 @@ long CacheConn::decr(string key)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "DECR %s", key.c_str());
 	if (!reply)
 	{
-		log_error("redis Command failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redis Command failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return -1;
@@ -572,7 +572,7 @@ long CacheConn::llen(string key)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "LLEN %s", key.c_str());
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return -1;
@@ -593,7 +593,7 @@ bool CacheConn::lrange(string key, long start, long end, list<string> &ret_value
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "LRANGE %s %d %d", key.c_str(), start, end);
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return false;
@@ -622,7 +622,7 @@ long CacheConn::lrem(string key, int count, string del_value)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "LREM %s %d %s", key.c_str(), count, del_value.c_str());
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return -1;
@@ -641,7 +641,7 @@ long CacheConn::sadd(string key, string member)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "SADD %s %s", key.c_str(), member.c_str());
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return -1;
@@ -651,7 +651,7 @@ long CacheConn::sadd(string key, string member)
 	return ret_value;
 }
 
-bool CacheConn::smembers(vector<string> ret_value, string key)
+bool CacheConn::smembers(vector<string>& ret_value, string key)
 {
 	if (Init())
 	{
@@ -660,7 +660,7 @@ bool CacheConn::smembers(vector<string> ret_value, string key)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "SMEMBERS %s", key.c_str());
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return false;
@@ -684,7 +684,7 @@ long CacheConn::srem(string key, string member)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "SREM %s %s", key.c_str(), member.c_str());
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return -1;
@@ -711,7 +711,7 @@ long CacheConn::zadd(string key, map<string, float> &values)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, command.c_str(), key.c_str());
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return -1;
@@ -730,7 +730,7 @@ bool CacheConn::zrange(string key, uint32_t beg, uint32_t end, vector<string> &m
 	redisReply *reply=(redisReply*)redisCommand(m_pContext,"ZRANGE %s %d %d",key.c_str(),beg,end);
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return false;
@@ -755,12 +755,16 @@ string CacheConn::zscore(string key, string member)
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "ZSCORE %s %s", key.c_str(), member.c_str());
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return ret_value;
 	}
-	ret_value=reply->str;
+	if(reply->type == REDIS_REPLY_NIL){
+		return "";
+	}else{
+		ret_value=reply->str;
+	}
 	freeReplyObject(reply);
 	return ret_value;
 }
@@ -776,7 +780,7 @@ bool CacheConn::flushdb()
 	redisReply *reply = (redisReply *)redisCommand(m_pContext, "FLUSHDB");
 	if (!reply)
 	{
-		log_error("redisCommand failed:%s\n", m_pContext->errstr);
+		spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 		redisFree(m_pContext);
 		m_pContext = NULL;
 		return false;
@@ -834,7 +838,7 @@ int CachePool::Init()
 		m_free_list.push_back(pConn);
 	}
 
-	// log_info("cache pool: %s, list size: %lu\n", m_pool_name.c_str(), m_free_list.size());
+	// spdlog::info("cache pool: %s, list size: %lu\n", m_pool_name.c_str(), m_free_list.size());
 	return 0;
 }
 
@@ -844,7 +848,7 @@ CacheConn *CachePool::GetCacheConn(const int timeout_ms)
 
 	if (m_abort_request)
 	{
-		log_warn("have aboort\n");
+		spdlog::warn("File:{} Line:{} have aboort",__FILE__,__LINE__);
 		return NULL;
 	}
 
@@ -856,10 +860,10 @@ CacheConn *CachePool::GetCacheConn(const int timeout_ms)
 			// 如果已经到达了，看看是否需要超时等待
 			if (timeout_ms <= 0) // 死等，直到有连接可以用 或者 连接池要退出
 			{
-				log_info("wait ms:%d\n", timeout_ms);
+				spdlog::info("File:{} Line:{} wait ms:{}",__FILE__,__LINE__, timeout_ms);
 				m_cond_var.wait(lock, [this]
 								{
-					log_info("wait:%d, size:%lu\n", wait_cout++, m_free_list.size());
+					spdlog::info("File:{} Line:{} wait:{}, size:{}",__FILE__,__LINE__, wait_cout++, m_free_list.size());
 					// 当前连接数量小于最大连接数量 或者请求释放连接池时退出
 					return (!m_free_list.empty()) | m_abort_request; });
 			}
@@ -871,7 +875,7 @@ CacheConn *CachePool::GetCacheConn(const int timeout_ms)
 				// 3. m_abort_request被置为true，要释放整个连接池
 				m_cond_var.wait_for(lock, std::chrono::milliseconds(timeout_ms), [this]
 									{
-					log_info("wait_for:%d, size:%lu\n", wait_cout++, m_free_list.size());
+					spdlog::info("File:{} Line:{} wait_for:{}, size:{}",__FILE__,__LINE__, wait_cout++, m_free_list.size());
 					return (!m_free_list.empty()) | m_abort_request; });
 				// 带超时功能时还要判断是否为空
 				if (m_free_list.empty()) // 如果连接池还是没有空闲则退出
@@ -882,7 +886,7 @@ CacheConn *CachePool::GetCacheConn(const int timeout_ms)
 
 			if (m_abort_request)
 			{
-				log_warn("have aboort\n");
+				spdlog::warn("File:{} Line:{} have aboort",__FILE__,__LINE__);
 				return NULL;
 			}
 		}
@@ -893,7 +897,7 @@ CacheConn *CachePool::GetCacheConn(const int timeout_ms)
 			int ret = p_cache_conn->Init();
 			if (ret)
 			{
-				log_error("Init CacheConn failed\n");
+				spdlog::error("File:{} Line:{} Init CacheConn failed",__FILE__,__LINE__);
 				delete p_cache_conn;
 				return NULL;
 			}
@@ -901,7 +905,7 @@ CacheConn *CachePool::GetCacheConn(const int timeout_ms)
 			{
 				m_free_list.push_back(p_cache_conn);
 				m_cur_conn_cnt++;
-				// log_info("new cache connection: %s, conn_cnt: %d\n", m_pool_name.c_str(), m_cur_conn_cnt);
+				// spdlog::info("new cache connection: %s, conn_cnt: %d\n", m_pool_name.c_str(), m_cur_conn_cnt);
 			}
 		}
 	}
@@ -931,6 +935,6 @@ void CachePool::RelCacheConn(CacheConn *p_cache_conn)
 	}
 	else
 	{
-		log_error("RelDBConn failed\n"); // 不再次回收连接
+		spdlog::error("File:{} Line:{} File:{} Line:{} RelDBConn failed",__FILE__,__LINE__); // 不再次回收连接
 	}
 }

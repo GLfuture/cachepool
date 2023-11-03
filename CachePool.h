@@ -12,10 +12,8 @@
 #include <hiredis/hiredis.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define log_error printf
-#define log_warn printf
-#define log_info printf
+#include <memory>
+#include <spdlog/spdlog.h>
 
 #define MIN_CACHE_CONN_CNT 2
 #define MAX_CACHE_CONN_FAIL_NUM 10
@@ -76,7 +74,7 @@ public:
 		redisReply *reply = (redisReply *)redisCommand(m_pContext, commad.c_str(), key.c_str(), fields...);
 		if (!reply)
 		{
-			log_error("redisCommand failed:%s\n", m_pContext->errstr);
+			spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 			redisFree(m_pContext);
 			m_pContext = NULL;
 			return 0;
@@ -112,7 +110,7 @@ public:
 		redisReply *reply = (redisReply *)redisCommand(m_pContext, commad.c_str(), key.c_str(), values...);
 		if (!reply)
 		{
-			log_error("redisCommand failed:%s\n", m_pContext->errstr);
+			spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 			redisFree(m_pContext);
 			m_pContext = NULL;
 			return -1;
@@ -137,7 +135,7 @@ public:
 		redisReply *reply = (redisReply *)redisCommand(m_pContext, commad.c_str(), key.c_str(), values...);
 		if (!reply)
 		{
-			log_error("redisCommand failed:%s\n", m_pContext->errstr);
+			spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 			redisFree(m_pContext);
 			m_pContext = NULL;
 			return -1;
@@ -153,7 +151,7 @@ public:
 
 	// ------------ 集合相关 ------------
 	long sadd(string key, string member);
-	bool smembers(vector<string> ret_value,string key);
+	bool smembers(vector<string>& ret_value,string key);
 	long srem(string key, string member);
 	template<typename ...Str>
 	bool sinter(vector<string>& res,Str... keys)
@@ -170,7 +168,7 @@ public:
 		redisReply *reply = (redisReply *)redisCommand(m_pContext, commad.c_str(), keys...);
 		if (!reply)
 		{
-			log_error("redisCommand failed:%s\n", m_pContext->errstr);
+			spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 			redisFree(m_pContext);
 			m_pContext = NULL;
 			return false;
@@ -204,7 +202,7 @@ public:
 		redisReply* reply=(redisReply*)redisCommand(m_pContext,commad.c_str(),key.c_str(),members...);
 		if (!reply)
 		{
-			log_error("redisCommand failed:%s\n", m_pContext->errstr);
+			spdlog::error("File:{} Line:{} redisCommand failed:{}",__FILE__,__LINE__, m_pContext->errstr);
 			redisFree(m_pContext);
 			m_pContext = NULL;
 			return ret_value;
@@ -214,7 +212,7 @@ public:
 		return ret_value;
 	}
 	
-
+	
 private:
 	CachePool *m_pCachePool;
 	redisContext *m_pContext; // 每个redis连接 redisContext redis客户端编程的对象
@@ -229,6 +227,7 @@ private:
 class CachePool
 {
 public:
+	using Ptr = std::shared_ptr<CachePool>;
 	// db_index和mysql不同的地方
 	CachePool(const char *pool_name, const char *server_ip, int server_port, int db_index,
 			  const char *password, int max_conn_cnt);
